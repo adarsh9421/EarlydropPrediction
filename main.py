@@ -10,7 +10,7 @@ from pydantic import BaseModel
 import numpy as np
 import pickle
 
-from models import Student, AcademicRecord, Prediction, Intervention
+from models import Student, AcademicRecord, Prediction
 from db import SessionLocal
 
 # ================= APP =================
@@ -25,7 +25,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ================= STATIC + TEMPLATES =================
+# ================= STATIC =================
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
@@ -37,7 +37,7 @@ def get_db():
     finally:
         db.close()
 
-# ================= LOAD MODEL =================
+# ================= MODEL =================
 try:
     with open("dropout_model.pkl", "rb") as f:
         model = pickle.load(f)
@@ -50,7 +50,6 @@ class StudentCreate(BaseModel):
     age: int
     gender: str
     income: int
-    
 
 class AcademicCreate(BaseModel):
     student_id: int
@@ -64,11 +63,7 @@ class PredictionInput(BaseModel):
     gender: int
     income: int
 
-class InterventionUpdate(BaseModel):
-    action_taken: str
-
-# ================= FRONTEND ROUTES =================
-
+# ================= FRONTEND =================
 @app.get("/", response_class=HTMLResponse)
 def dashboard(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
@@ -77,20 +72,16 @@ def dashboard(request: Request):
 def add_page(request: Request):
     return templates.TemplateResponse("add_student.html", {"request": request})
 
-@app.get("/about", response_class=HTMLResponse)
-def about_page(request: Request):
-    return templates.TemplateResponse("about.html", {"request": request})
+# ================= API =================
 
-# ================= API ROUTES =================
-
+# ✅ CREATE STUDENT (FIXED)
 @app.post("/students")
-def create_student(student: StudentCreate, db: Session = Depends(get_db)):
+def create_student(data: StudentCreate, db: Session = Depends(get_db)):
     new_student = Student(
-        name=student.name,
-        age=student.age,
-        gender=student.gender,
-        income=student.income,
-        parent_education=student.parent_education
+        name=data.name,
+        age=data.age,
+        gender=data.gender,
+        income=data.income
     )
 
     db.add(new_student)
@@ -99,16 +90,23 @@ def create_student(student: StudentCreate, db: Session = Depends(get_db)):
 
     return new_student
 
+
+# ✅ ADD ACADEMIC
 @app.post("/academic")
 def add_academic(record: AcademicCreate, db: Session = Depends(get_db)):
-    db.add(AcademicRecord(
+    new_record = AcademicRecord(
         student_id=record.student_id,
         attendance=record.attendance,
         marks=record.marks
-    ))
+    )
+
+    db.add(new_record)
     db.commit()
+
     return {"message": "Academic added"}
 
+
+# ✅ PREDICT
 @app.post("/predict/{student_id}")
 def predict(student_id: int, data: PredictionInput, db: Session = Depends(get_db)):
 
@@ -120,85 +118,49 @@ def predict(student_id: int, data: PredictionInput, db: Session = Depends(get_db
         risk_score = (
             (1 - data.attendance / 100) * 0.4 +
             (1 - data.marks / 100) * 0.4 +
-            (0.2 if data.income== 0 else 0)
+            (0.2 if data.income < 3000 else 0)
         )
 
     risk_score = round(min(max(risk_score, 0), 1), 2)
 
-    reasons = []
-    if data.attendance < 60:
-        reasons.append("Low attendance")
-    if data.marks < 50:
-        reasons.append("Poor performance")
-    if data.income== 0:
-        reasons.append("Financial issue")
-
-    actions = []
-    if "Low attendance" in reasons:
-        actions.append("Parent meeting")
-    if "Poor performance" in reasons:
-        actions.append("Assign tutor")
-    if "Financial issue" in reasons:
-        actions.append("Provide scholarship")
-
     risk_level = "High" if risk_score > 0.7 else "Medium" if risk_score > 0.4 else "Low"
 
-    db.add(Prediction(
+    new_prediction = Prediction(
         student_id=student_id,
         risk_score=risk_score,
-        risk_level=risk_level,
-        reason=", ".join(reasons)
-    ))
+        risk_level=risk_level
+    )
 
-    for act in actions:
-        db.add(Intervention(
-            student_id=student_id,
-            action_suggested=act,
-            status="pending"
-        ))
-
+    db.add(new_prediction)
     db.commit()
 
-    return {
-        "dropout_risk": risk_score,
-        "risk_level": risk_level,
-        "reasons": reasons,
-        "suggested_actions": actions
-    }
+    return {"risk": risk_level, "score": risk_score}
 
-# ================= DASHBOARD DATA =================
 
+# ✅ FETCH STUDENTS (FOR FRONTEND)
 @app.get("/students")
 def get_students(db: Session = Depends(get_db)):
-    results = db.query(Student, AcademicRecord, Prediction).join(
-        AcademicRecord, Student.id == AcademicRecord.student_id
-    ).join(
-        Prediction, Student.id == Prediction.student_id
-    ).all()
 
-    data = []
-    for s, a, p in results:
-        data.append({
+    students = db.query(Student).all()
+    result = []
+
+    for s in students:
+
+        academic = db.query(AcademicRecord).filter(
+            AcademicRecord.student_id == s.id
+        ).first()
+
+        prediction = db.query(Prediction).filter(
+            Prediction.student_id == s.id
+        ).first()
+
+        result.append({
             "id": s.id,
             "name": s.name,
             "age": s.age,
-            "attendance": a.attendance,
-            "marks": a.marks,
-            "risk": p.risk_level
+            "attendance": academic.attendance if academic else 0,
+            "marks": academic.marks if academic else 0,
+            "risk": prediction.risk_level if prediction else "Low"
         })
 
-    return data
-
-@app.get("/priority-students")
-def priority_students(db: Session = Depends(get_db)):
-    return db.query(Prediction).order_by(
-        Prediction.risk_score.desc()
-    ).limit(5).all()
-
-@app.post("/intervention/{id}")
-def update_intervention(id: int, data: InterventionUpdate, db: Session = Depends(get_db)):
-    intervention = db.get(Intervention, id)
-    intervention.action_taken = data.action_taken
-    intervention.status = "completed"
-    db.commit()
-    return {"message": "Updated"}
+    return result
