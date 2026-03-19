@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dropout AI | Admin Analytics</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>Dropout AI | Elite Analytics</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -18,82 +20,104 @@
         </div>
         <nav>
             <ul>
-                <li class="active">Overview</li>
-                <a href="/templates/records.html"><li>Student Records</li></a>
-                <li>Interventions</li>
-                <li>Reports</li>
+                <li class="nav-item active">Overview</li>
+                <a><li class="nav-item" onclick="window.location.href='/records.html'">Student Records</li></a>
+                <li class="nav-item">Interventions</li>
+                <li class="nav-item">Reports</li>
             </ul>
         </nav>
+        <div class="sidebar-footer">
+            <small>v2.4.0 Stable</small>
+        </div>
     </aside>
 
     <main class="content">
         <header class="main-header">
-            <div>
-                <h1>Institutional Dashboard</h1>
-                <p>Early Warning System & Risk Assessment</p>
+            <div class="header-title">
+                <h1>Institutional Intelligence</h1>
+                <p>Advanced predictive modeling for student retention</p>
             </div>
+            
+            <div class="search-container">
+                <svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                <input type="text" id="studentSearch" placeholder="Search student intelligence..." onkeyup="filterTable()">
+            </div>
+
             <div class="user-profile">
-                <span>Administrator</span>
+                <div class="profile-info">
+                    <span class="p-name">Admin User</span>
+                    <span class="p-role">Superuser</span>
+                </div>
                 <img src="https://ui-avatars.com/api/?name=Admin&background=6366f1&color=fff" alt="avatar">
             </div>
         </header>
 
         <section class="kpi-grid">
             <div class="kpi-card">
-                <small>Total Enrollment</small>
-                <h2 id="total-count">0</h2>
+                <div class="kpi-label">Active Enrollment</div>
+                <div class="kpi-value" id="total-count">0</div>
+                <div class="kpi-trend up">+2.5%</div>
             </div>
             <div class="kpi-card danger">
-                <small>Critical Risk</small>
-                <h2 id="high-count">0</h2>
+                <div class="kpi-label">Critical Alerts</div>
+                <div class="kpi-value" id="high-count">0</div>
+                <div class="kpi-trend">Immediate Action</div>
             </div>
             <div class="kpi-card warning">
-                <small>Moderate Risk</small>
-                <h2 id="med-count">0</h2>
+                <div class="kpi-label">At-Risk Watch</div>
+                <div class="kpi-value" id="med-count">0</div>
+                <div class="kpi-trend">Monitoring</div>
             </div>
             <div class="kpi-card success">
-                <small>On Track</small>
-                <h2 id="low-count">0</h2>
+                <div class="kpi-label">Retention Rate</div>
+                <div class="kpi-value" id="low-count">0</div>
+                <div class="kpi-trend up">94% Target</div>
             </div>
         </section>
 
         <div class="dashboard-layout">
             <div class="analytics-col">
-                <div class="glass-card chart-main">
-                    <h3>Risk Distribution</h3>
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h3>Risk Sentiment Distribution</h3>
+                        <span class="hint">Real-time update</span>
+                    </div>
                     <div class="chart-height">
                         <canvas id="riskPieChart"></canvas>
                     </div>
                 </div>
                 
                 <div class="glass-card">
-                    <h3>Academic vs Attendance Correlation</h3>
+                    <div class="card-header">
+                        <h3>Performance Distribution (Density)</h3>
+                        <span class="hint">Attendance vs Grade</span>
+                    </div>
                     <div class="chart-height">
-                        <canvas id="scatterChart"></canvas>
+                        <canvas id="distributionChart"></canvas>
                     </div>
                 </div>
             </div>
 
             <div class="data-col">
                 <div class="glass-card intervention-panel">
-                    <h3>⚠️ Priority Interventions (Top 3 At-Risk)</h3>
+                    <h3>⚠️ Priority Intervention Protocols</h3>
                     <div id="intervention-list">
                         </div>
                 </div>
 
                 <div class="glass-card table-panel">
                     <div class="table-header">
-                        <h3>Student Risk Registry</h3>
-                        <input type="text" id="studentSearch" placeholder="Search by name...">
+                        <h3>Student Intelligence Registry</h3>
+                        <button class="export-btn">Download CSV</button>
                     </div>
                     <div class="scroll-area">
-                        <table>
+                        <table id="intelligenceTable">
                             <thead>
                                 <tr>
-                                    <th>Student</th>
+                                    <th>Reference Name</th>
                                     <th>Attendance</th>
-                                    <th>Marks</th>
-                                    <th>Risk Status</th>
+                                    <th>Performance</th>
+                                    <th>Risk Index</th>
                                 </tr>
                             </thead>
                             <tbody id="student-rows">
@@ -106,9 +130,7 @@
     </main>
 </div>
 
-<script >
-    // Parsed CSV Data from User
-const rawData = `name,student_id,age,gender,attendance,marks,assignment_submission,income,remarks
+<script>const rawData = `name,student_id,age,gender,attendance,marks,assignment_submission,income,remarks
 Aarav Sharma,01,15,male,85,78,90,300000,Good performance
 Riya Verma,02,16,female,60,55,65,150000,At risk due to low attendance
 Karan Singh,03,17,male,92,88,95,500000,Excellent student
@@ -130,74 +152,117 @@ Maya Singh,50,14,female,50,40,55,120000,High dropout risk
 Adarsh gusain,54,14,male,45,35,50,110000,High risk
 Ritik Verma,56,16,male,40,45,50,100000,Very high dropout risk
 Maya Rao,60,14,female,50,40,55,120000,High dropout
-Nikhil rana,67,16,male,40,45,50,100000,Very high dropout risk`;
+Nikhil rana,67,16,male,40,45,50,100000,Very high dropout risk
+Rohit Singh,70,18,male,90,85,85,500000,Excellent performance`;
 
-function initDashboard() {
+let processedStudents = [];
+
+function init() {
     const lines = rawData.trim().split('\n');
-    const headers = lines[0].split(',');
-    const students = lines.slice(1).map(line => {
+    processedStudents = lines.slice(1).map(line => {
         const val = line.split(',');
-        const attendance = parseInt(val[4]);
+        const att = parseInt(val[4]);
         const marks = parseInt(val[5]);
+        let risk = "Low", score = 0;
         
-        // Calculate Risk Logic
-        let risk = "Low";
-        let score = 0; // Higher = Higher Risk
-        if (attendance < 50) score += 50;
-        else if (attendance < 70) score += 20;
+        if (att < 50) score += 50; else if (att < 70) score += 20;
         if (marks < 50) score += 40;
         
         if (score >= 70) risk = "High";
         else if (score >= 20) risk = "Medium";
 
-        return {
-            name: val[0],
-            attendance,
-            marks,
-            risk,
-            riskScore: score
-        };
+        return { name: val[0], att, marks, risk, score };
     });
 
-    renderStats(students);
-    renderTable(students);
-    renderCharts(students);
-    renderInterventions(students);
+    renderStats();
+    renderTable(processedStudents);
+    renderCharts();
+    renderInterventions();
 }
 
-function renderStats(students) {
-    const high = students.filter(s => s.risk === "High").length;
-    const med = students.filter(s => s.risk === "Medium").length;
-    const low = students.filter(s => s.risk === "Low").length;
-
-    document.getElementById('total-count').innerText = students.length;
-    document.getElementById('high-count').innerText = high;
-    document.getElementById('med-count').innerText = med;
-    document.getElementById('low-count').innerText = low;
+function renderStats() {
+    const stats = { High: 0, Medium: 0, Low: 0 };
+    processedStudents.forEach(s => stats[s.risk]++);
+    document.getElementById('total-count').innerText = processedStudents.length;
+    document.getElementById('high-count').innerText = stats.High;
+    document.getElementById('med-count').innerText = stats.Medium;
+    document.getElementById('low-count').innerText = stats.Low;
 }
 
-function renderTable(students) {
+function renderTable(data) {
     const tbody = document.getElementById('student-rows');
-    tbody.innerHTML = students.map(s => `
+    tbody.innerHTML = data.map(s => `
         <tr>
             <td style="font-weight:600">${s.name}</td>
-            <td>${s.attendance}%</td>
-            <td>${s.marks}</td>
+            <td>${s.att}%</td>
+            <td>${s.marks}/100</td>
             <td><span class="risk-tag risk-${s.risk.toLowerCase()}">${s.risk}</span></td>
         </tr>
     `).join('');
 }
 
-function renderInterventions(students) {
-    // Sort by risk score descending
-    const topAtRisk = [...students].sort((a, b) => b.riskScore - a.riskScore).slice(0, 3);
-    const container = document.getElementById('intervention-list');
+function filterTable() {
+    const query = document.getElementById('studentSearch').value.toLowerCase();
+    const filtered = processedStudents.filter(s => s.name.toLowerCase().includes(query));
+    renderTable(filtered);
+}
 
-    const actions = [
-        "Schedule Parent-Teacher Meeting",
-        "Enroll in After-school Tutoring",
-        "Financial Support Review Required"
-    ];
+function renderCharts() {
+    const stats = { High: 0, Medium: 0, Low: 0 };
+    processedStudents.forEach(s => stats[s.risk]++);
+
+    // Transition-heavy Doughnut
+    new Chart(document.getElementById('riskPieChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['High Risk', 'Medium', 'Stable'],
+            datasets: [{
+                data: [stats.High, stats.Medium, stats.Low],
+                backgroundColor: ['#ef4444', '#f59e0b', '#10b981'],
+                borderWidth: 0,
+                hoverOffset: 15
+            }]
+        },
+        options: {
+            cutout: '75%',
+            animation: { animateScale: true, duration: 2500, easing: 'easeOutQuart' },
+            plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } } },
+            maintainAspectRatio: false
+        }
+    });
+
+    // Bubble/Density Chart (Instead of scatter for more 'Professional' look)
+    new Chart(document.getElementById('distributionChart'), {
+        type: 'bubble',
+        data: {
+            datasets: [{
+                label: 'Student Density',
+                data: processedStudents.map(s => ({
+                    x: s.att,
+                    y: s.marks,
+                    r: s.risk === "High" ? 12 : 6
+                })),
+                backgroundColor: processedStudents.map(s => 
+                    s.risk === "High" ? 'rgba(239, 68, 68, 0.6)' : 'rgba(99, 102, 241, 0.4)'
+                ),
+                borderColor: 'transparent'
+            }]
+        },
+        options: {
+            scales: {
+                x: { grid: { display: false }, title: { display: true, text: 'Attendance' } },
+                y: { grid: { color: '#f1f5f9' }, title: { display: true, text: 'Marks' } }
+            },
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } }
+        }
+    });
+}
+
+function renderInterventions() {
+    const topAtRisk = [...processedStudents].sort((a, b) => b.score - a.score).slice(0, 3);
+    const container = document.getElementById('intervention-list');
+    const actions = ["Priority Counseling", "Attendance Waiver Review", "Academic Support"];
 
     container.innerHTML = topAtRisk.map((s, i) => `
         <div class="intervention-item">
@@ -207,51 +272,6 @@ function renderInterventions(students) {
     `).join('');
 }
 
-function renderCharts(students) {
-    const high = students.filter(s => s.risk === "High").length;
-    const med = students.filter(s => s.risk === "Medium").length;
-    const low = students.filter(s => s.risk === "Low").length;
-
-    // Transitioning Pie (Doughnut) Chart
-    new Chart(document.getElementById('riskPieChart'), {
-        type: 'doughnut',
-        data: {
-            labels: ['High Risk', 'Medium Risk', 'Low Risk'],
-            datasets: [{
-                data: [high, med, low],
-                backgroundColor: ['#ef4444', '#f59e0b', '#10b981'],
-                hoverOffset: 20,
-                borderWidth: 0
-            }]
-        },
-        options: {
-            animation: { duration: 2000, easing: 'easeOutQuart' },
-            maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom' } }
-        }
-    });
-
-    // Scatter Chart for Correlation
-    new Chart(document.getElementById('scatterChart'), {
-        type: 'scatter',
-        data: {
-            datasets: [{
-                label: 'Student Metrics',
-                data: students.map(s => ({ x: s.attendance, y: s.marks })),
-                backgroundColor: '#6366f1'
-            }]
-        },
-        options: {
-            scales: {
-                x: { title: { display: true, text: 'Attendance (%)' } },
-                y: { title: { display: true, text: 'Marks' } }
-            },
-            maintainAspectRatio: false
-        }
-    });
-}
-
-window.onload = initDashboard;
-</script>
+window.onload = init;</script>
 </body>
 </html>
