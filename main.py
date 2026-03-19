@@ -50,6 +50,7 @@ class StudentCreate(BaseModel):
     age: int
     gender: str
     income: int
+    attendance: int
 
 class AcademicCreate(BaseModel):
     student_id: int
@@ -81,6 +82,7 @@ def create_student(data: StudentCreate, db: Session = Depends(get_db)):
         name=data.name,
         age=data.age,
         gender=data.gender,
+        attendance=data.attendance,
         income=data.income
     )
 
